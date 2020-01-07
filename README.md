@@ -1,19 +1,19 @@
-### Chinese NER using Bert
+## Chinese NER using Bert
 
 BERT for Chinese NER. 
 
-#### model list
+### model list
 
 1. BERT+Softmax
 2. BERT+CRF
 3. BERT+Span
 
-#### requirement
+### requirement
 
 1. pytorch=1.1.0
 2. cuda=9.0
 
-#### input format
+### input format
 
 Input format (prefer BIOS tag scheme), with each character its label for one line. Sentences are splited with a null line.
 
@@ -34,12 +34,23 @@ Input format (prefer BIOS tag scheme), with each character its label for one lin
 生	O 
 ```
 
-#### run the code
+### run the code
 
 1. Modify the configuration information in `run_ner_xxx.py` or `run_ner_xxx.sh` .
 2. `sh run_ner_xxx.sh`
 
-#### result
+**note** file structure of the model
+
+```text
+├── prev_trained_model
+|  └── albert_base
+|  |  └── pytorch_model.bin
+|  |  └── config.json
+|  |  └── vocab.txt
+|  |  └── ......
+```
+
+### result
 
 Tne overall performance of BERT on **dev(test)**:
 
