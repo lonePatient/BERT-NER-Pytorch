@@ -39,7 +39,7 @@ Input format (prefer BIOS tag scheme), with each character its label for one lin
 1. Modify the configuration information in `run_ner_xxx.py` or `run_ner_xxx.sh` .
 2. `sh run_ner_xxx.sh`
 
-**note** file structure of the model
+**note**: file structure of the model
 
 ```text
 ├── prev_trained_model
