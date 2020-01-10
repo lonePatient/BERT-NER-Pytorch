@@ -1,24 +1,26 @@
-## Chinese NER using Bert
+# Chinese NER using Bert
 
 BERT for Chinese NER. 
 
-### dataset list
+## dataset list
 
 1. cner: datasets/cner
 2. CLUENER: https://github.com/CLUEbenchmark/CLUENER
 
-### model list
+## model list
 
 1. BERT+Softmax
 2. BERT+CRF
 3. BERT+Span
+4. BERT+Span+label_smoothing
+5. BERT+Span+focal_loss
 
-### requirement
+## requirement
 
 1. pytorch=1.1.0
 2. cuda=9.0
 
-### input format
+## input format
 
 Input format (prefer BIOS tag scheme), with each character its label for one line. Sentences are splited with a null line.
 
@@ -39,7 +41,7 @@ Input format (prefer BIOS tag scheme), with each character its label for one lin
 生	O 
 ```
 
-### run the code
+## run the code
 
 1. Modify the configuration information in `run_ner_xxx.py` or `run_ner_xxx.sh` .
 2. `sh run_ner_xxx.sh`
@@ -55,7 +57,7 @@ Input format (prefer BIOS tag scheme), with each character its label for one lin
 |  |  └── ......
 ```
 
-### CLUENER result
+## CLUENER result
 
 Tne overall performance of BERT on **dev**:
 
@@ -63,12 +65,12 @@ Tne overall performance of BERT on **dev**:
 | ------------ | ------------------ | ------------------ | ------------------ | ------------------------------------------------------------ |
 | BERT+Softmax | 0.7916     | 0.7962     | 0.7939    | train_max_length=128 eval_max_length=512 epoch=4 lr=3e-5 batch_size=24 |
 | BERT+CRF     | 0.7877     | 0.8008 | 0.7942     | train_max_length=128 eval_max_length=512 epoch=5 lr=3e-5 batch_size=24 |
-| BERT+Span    | 0.8132 | 0.8092 | 0.8112 | train_max_length=128 eval_max_length=512 epoch=4 lr=3e-5 batch_size=24 |
+| BERT+Span    | 0.8132 | **0.8092** | **0.8112** | train_max_length=128 eval_max_length=512 epoch=4 lr=3e-5 batch_size=24 |
 | BERT+Span+focal_loss    | 0.8121 | 0.8008 | 0.8064 | train_max_length=128 eval_max_length=512 epoch=4 lr=3e-5 batch_size=24 loss_type=focal |
-| BERT+Span+label_smoothing   | 0.8235 | 0.7946 | 0.8088 | train_max_length=128 eval_max_length=512 epoch=4 lr=3e-5 batch_size=24 loss_type=lsr |
+| BERT+Span+label_smoothing   | **0.8235** | 0.7946 | 0.8088 | train_max_length=128 eval_max_length=512 epoch=4 lr=3e-5 batch_size=24 loss_type=lsr |
 
 
-### Cner result
+## Cner result
 
 Tne overall performance of BERT on **dev(test)**:
 
