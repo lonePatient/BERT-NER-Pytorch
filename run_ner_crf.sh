@@ -2,7 +2,7 @@ CURRENT_DIR=`pwd`
 export BERT_BASE_DIR=$CURRENT_DIR/prev_trained_model/bert-base
 export GLUE_DIR=$CURRENT_DIR/datasets
 export OUTPUR_DIR=$CURRENT_DIR/outputs
-TASK_NAME="cner"
+TASK_NAME="cluener"
 
 python run_ner_crf.py \
   --model_type=bert \
@@ -17,9 +17,9 @@ python run_ner_crf.py \
   --per_gpu_train_batch_size=24 \
   --per_gpu_eval_batch_size=24 \
   --learning_rate=3e-5 \
-  --num_train_epochs=10.0 \
-  --logging_steps=160 \
-  --save_steps=160 \
+  --num_train_epochs=5.0 \
+  --logging_steps=448 \
+  --save_steps=448 \
   --output_dir=$OUTPUR_DIR/${TASK_NAME}_output/ \
   --overwrite_output_dir \
   --seed=42

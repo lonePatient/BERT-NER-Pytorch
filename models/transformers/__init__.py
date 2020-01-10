@@ -34,6 +34,7 @@ from .tokenization_xlnet import XLNetTokenizer, SPIECE_UNDERLINE
 from .tokenization_xlm import XLMTokenizer
 from .tokenization_roberta import RobertaTokenizer
 from .tokenization_distilbert import DistilBertTokenizer
+from .tokenization_albert import FullTokenizer
 
 # Configurations
 from .configuration_utils import PretrainedConfig
@@ -48,6 +49,7 @@ from .configuration_ctrl import CTRLConfig, CTRL_PRETRAINED_CONFIG_ARCHIVE_MAP
 from .configuration_xlm import XLMConfig, XLM_PRETRAINED_CONFIG_ARCHIVE_MAP
 from .configuration_roberta import RobertaConfig, ROBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP
 from .configuration_distilbert import DistilBertConfig, DISTILBERT_PRETRAINED_CONFIG_ARCHIVE_MAP
+from .configuration_albert import AlbertConfig
 
 # Modeling
 if is_torch_available():
@@ -85,7 +87,7 @@ if is_torch_available():
     from .modeling_distilbert import (DistilBertForMaskedLM, DistilBertModel,
                                 DistilBertForSequenceClassification, DistilBertForQuestionAnswering,
                                 DISTILBERT_PRETRAINED_MODEL_ARCHIVE_MAP)
-    from .modeling_albert import AlbertForSequenceClassification,AlbertForMultipleChoice
+    from .modeling_albert import AlbertModel
 
 if not is_tf_available() and not is_torch_available():
     logger.warning("Neither PyTorch nor TensorFlow >= 2.0 have been found."

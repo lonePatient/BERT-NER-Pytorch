@@ -14,8 +14,9 @@ from callback.progressbar import ProgressBar
 from tools.common import seed_everything
 from tools.common import init_logger, logger
 
-from models.transformers import WEIGHTS_NAME,BertConfig
+from models.transformers import WEIGHTS_NAME,BertConfig,AlbertConfig
 from models.bert_for_ner import BertSpanForNer
+from models.albert_for_ner import AlbertSpanForNer
 from processors.utils_ner import CNerTokenizer
 from processors.ner_span import convert_examples_to_features
 from processors.ner_span import ner_processors as processors
@@ -23,11 +24,12 @@ from processors.ner_span import collate_fn
 from metrics.ner_metrics import SpanEntityScore
 from processors.utils_ner import bert_extract_item
 
-ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig,)), ())
+ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig,AlbertConfig)), ())
 
 MODEL_CLASSES = {
     ## bert ernie bert_wwm bert_wwwm_ext
     'bert': (BertConfig, BertSpanForNer, CNerTokenizer),
+    'albert': (AlbertConfig,AlbertSpanForNer,CNerTokenizer)
 }
 
 def train(args, train_dataset, model, tokenizer):
@@ -327,6 +329,7 @@ def main():
 
     # Other parameters
     parser.add_argument('--markup', default='bios', type=str, choices=['bios', 'bio'])
+    parser.add_argument('--loss_type', default='ce', type=str, choices=['lsr', 'focal', 'ce'])
     parser.add_argument( "--labels",default="",type=str,
                         help="Path to a file containing all labels. If not specified, CoNLL-2003 labels are used.",)
     parser.add_argument( "--config_name", default="", type=str,
@@ -432,7 +435,8 @@ def main():
     args.model_type = args.model_type.lower()
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path,
-                                          num_labels=num_labels,cache_dir=args.cache_dir if args.cache_dir else None,
+                                          num_labels=num_labels,loss_type = args.loss_type,
+                                          cache_dir=args.cache_dir if args.cache_dir else None,
                                           soft_label = True)
     tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
                                                 do_lower_case=args.do_lower_case,

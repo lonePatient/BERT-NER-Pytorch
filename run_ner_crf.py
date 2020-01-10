@@ -15,8 +15,9 @@ from callback.progressbar import ProgressBar
 from tools.common import seed_everything
 from tools.common import init_logger, logger
 
-from models.transformers import WEIGHTS_NAME,BertConfig
+from models.transformers import WEIGHTS_NAME,BertConfig,AlbertConfig
 from models.bert_for_ner import BertCrfForNer
+from models.albert_for_ner import AlbertCrfForNer
 from processors.utils_ner import CNerTokenizer,get_entities
 from processors.ner_seq import convert_examples_to_features
 from processors.ner_seq import ner_processors as processors
@@ -28,6 +29,7 @@ ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (
 MODEL_CLASSES = {
     ## bert ernie bert_wwm bert_wwwm_ext
     'bert': (BertConfig, BertCrfForNer, CNerTokenizer),
+    'albert':(AlbertConfig,AlbertCrfForNer,CNerTokenizer)
 }
 
 def train(args, train_dataset, model, tokenizer):

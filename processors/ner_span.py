@@ -213,8 +213,39 @@ class CnerProcessor(DataProcessor):
             examples.append(InputExample(guid=guid, text_a=text_a, subject=subject))
         return examples
 
+class CluenerProcessor(DataProcessor):
+    """Processor for the chinese ner data set."""
+
+    def get_train_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(self._read_json(os.path.join(data_dir, "train.json")), "train")
+
+    def get_dev_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(self._read_json(os.path.join(data_dir, "dev.json")), "dev")
+
+    def get_test_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(self._read_json(os.path.join(data_dir, "test.json")), "test")
+
+    def get_labels(self):
+        """See base class."""
+        return ["O", "address", "book","company",'game','government','movie','name','organization','position','scene']
+
+    def _create_examples(self, lines, set_type):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            guid = "%s-%s" % (set_type, i)
+            text_a = line['words']
+            labels = line['labels']
+            subject = get_entities(labels,id2label=None,markup='bios')
+            examples.append(InputExample(guid=guid, text_a=text_a, subject=subject))
+        return examples
+
 ner_processors = {
     "cner": CnerProcessor,
+    'cluener':CluenerProcessor
 }
 
 
