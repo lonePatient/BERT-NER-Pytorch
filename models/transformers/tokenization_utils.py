@@ -739,7 +739,6 @@ class PreTrainedTokenizer(object):
     def encode_plus(self,
                     text,
                     text_pair=None,
-                    text_third=None,
                     add_special_tokens=False,
                     max_length=None,
                     stride=0,
@@ -786,18 +785,16 @@ class PreTrainedTokenizer(object):
 
         first_ids = get_input_ids(text)
         second_ids = get_input_ids(text_pair) if text_pair is not None else None
-        third_ids = get_input_ids(text_third) if text_third is not None else None
 
         return self.prepare_for_model(first_ids,
                                       pair_ids=second_ids,
-                                      third_ids=third_ids,
                                       max_length=max_length,
                                       add_special_tokens=add_special_tokens,
                                       stride=stride,
                                       truncation_strategy=truncation_strategy,
                                       return_tensors=return_tensors)
 
-    def prepare_for_model(self, ids, pair_ids=None,third_ids=None, max_length=None, add_special_tokens=False, stride=0,
+    def prepare_for_model(self, ids, pair_ids=None, max_length=None, add_special_tokens=False, stride=0,
                           truncation_strategy='longest_first', return_tensors=None):
         """
         Prepares a sequence of input id, or a pair of sequences of inputs ids so that it can be used by the model.
@@ -844,18 +841,17 @@ class PreTrainedTokenizer(object):
         pair = bool(pair_ids is not None)
         len_ids = len(ids)
         len_pair_ids = len(pair_ids) if pair else 0
-        len_third_ids = len(third_ids) if pair else 0
 
         encoded_inputs = {}
         total_len = len_ids + len_pair_ids + (self.num_added_tokens(pair=pair) if add_special_tokens else 0)
-        if len_third_ids>0:
-            total_len+= 1
         if max_length and total_len > max_length:
-            ids, pair_ids,third_ids = self.truncate_sequences(ids, pair_ids=pair_ids,third_ids=third_ids,
-                                                                        num_tokens_to_remove=total_len-max_length)
+            ids, pair_ids, overflowing_tokens = self.truncate_sequences(ids, pair_ids=pair_ids,
+                                                                        num_tokens_to_remove=total_len-max_length,
+                                                                        truncation_strategy=truncation_strategy,
+                                                                        stride=stride)
+            encoded_inputs["overflowing_tokens"] = overflowing_tokens
             encoded_inputs["num_truncated_tokens"] = total_len - max_length
-        if len(third_ids) >0:
-            pair_ids  = pair_ids+[self.sep_token_id]+third_ids
+
         if add_special_tokens:
             sequence = self.build_inputs_with_special_tokens(ids, pair_ids)
             token_type_ids = self.create_token_type_ids_from_sequences(ids, pair_ids)
@@ -864,8 +860,14 @@ class PreTrainedTokenizer(object):
             sequence = ids + pair_ids if pair else ids
             token_type_ids = [0] * len(ids) + ([1] * len(pair_ids) if pair else [])
 
-        sequence = torch.tensor([sequence])
-        token_type_ids = torch.tensor([token_type_ids])
+        if return_tensors == 'tf' and is_tf_available():
+            sequence = tf.constant([sequence])
+            token_type_ids = tf.constant([token_type_ids])
+        elif return_tensors == 'pt' and is_torch_available():
+            sequence = torch.tensor([sequence])
+            token_type_ids = torch.tensor([token_type_ids])
+        elif return_tensors is not None:
+            logger.warning("Unable to convert output to tensors format {}, PyTorch or TensorFlow is not available.".format(return_tensors))
 
         encoded_inputs["input_ids"] = sequence
         encoded_inputs["token_type_ids"] = token_type_ids
@@ -877,23 +879,45 @@ class PreTrainedTokenizer(object):
 
         return encoded_inputs
 
-    def truncate_sequences(self, ids, pair_ids=None, third_ids=None,num_tokens_to_remove=0):
+    def truncate_sequences(self, ids, pair_ids=None, num_tokens_to_remove=0, truncation_strategy='longest_first', stride=0):
         """Truncates a sequence pair in place to the maximum length.
+            truncation_strategy: string selected in the following options:
+                - 'longest_first' (default) Iteratively reduce the inputs sequence until the input is under max_length
+                    starting from the longest one at each token (when there is a pair of input sequences).
+                    Overflowing tokens only contains overflow from the first sequence.
+                - 'only_first': Only truncate the first sequence. raise an error if the first sequence is shorter or equal to than num_tokens_to_remove.
+                - 'only_second': Only truncate the second sequence
+                - 'do_not_truncate': Does not truncate (raise an error if the input sequence is longer than max_length)
         """
-        if pair_ids is None:
-            pair_ids = []
-        if third_ids is None:
-            third_ids = []
         if num_tokens_to_remove <= 0:
-            return ids, pair_ids, third_ids
-        for _ in range(num_tokens_to_remove):
-            if len(ids) > len(pair_ids) and len(ids) > len(third_ids):
-                ids = ids[:-1]
-            elif len(pair_ids) > len(ids) and len(pair_ids) > len(third_ids):
-                pair_ids = pair_ids[:-1]
-            else:
-                third_ids = third_ids[:-1]
-        return (ids, pair_ids, third_ids)
+            return ids, pair_ids, []
+
+        if truncation_strategy == 'longest_first':
+            overflowing_tokens = []
+            for _ in range(num_tokens_to_remove):
+                if pair_ids is None or len(ids) > len(pair_ids):
+                    overflowing_tokens = [ids[-1]] + overflowing_tokens
+                    ids = ids[:-1]
+                else:
+                    pair_ids = pair_ids[:-1]
+            window_len = min(len(ids), stride)
+            if window_len > 0:
+                overflowing_tokens = ids[-window_len:] + overflowing_tokens
+        elif truncation_strategy == 'only_first':
+            assert len(ids) > num_tokens_to_remove
+            window_len = min(len(ids), stride + num_tokens_to_remove)
+            overflowing_tokens = ids[-window_len:]
+            ids = ids[:-num_tokens_to_remove]
+        elif truncation_strategy == 'only_second':
+            assert pair_ids is not None and len(pair_ids) > num_tokens_to_remove
+            window_len = min(len(pair_ids), stride + num_tokens_to_remove)
+            overflowing_tokens = pair_ids[-window_len:]
+            pair_ids = pair_ids[:-num_tokens_to_remove]
+        elif truncation_strategy == 'do_not_truncate':
+            raise ValueError("Input sequence are too long for max_length. Please select a truncation strategy.")
+        else:
+            raise ValueError("Truncation_strategy should be selected in ['longest_first', 'only_first', 'only_second', 'do_not_truncate']")
+        return (ids, pair_ids, overflowing_tokens)
 
     def create_token_type_ids_from_sequences(self, token_ids_0, token_ids_1=None):
         logger.warning("This tokenizer does not make use of special tokens.")
