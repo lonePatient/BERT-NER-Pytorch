@@ -6,6 +6,7 @@ import json
 
 import numpy as np
 import torch
+import torch.nn as nn
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
@@ -184,6 +185,8 @@ def evaluate(args, model, tokenizer, prefix=""):
     eval_loss = 0.0
     nb_eval_steps = 0
     pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
+    if isinstance(model, nn.DataParallel):
+        model = model.module
     for step, batch in enumerate(eval_dataloader):
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
@@ -244,6 +247,8 @@ def predict(args, model, tokenizer, prefix=""):
     results = []
     output_submit_file = os.path.join(pred_output_dir, prefix, "test_prediction.json")
     pbar = ProgressBar(n_total=len(test_dataloader), desc="Predicting")
+    if isinstance(model, nn.DataParallel):
+        model = model.module
     for step, batch in enumerate(test_dataloader):
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
