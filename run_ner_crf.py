@@ -3,11 +3,10 @@ import glob
 import logging
 import os
 import json
+import time
 
-import numpy as np
 import torch
 import torch.nn as nn
-from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 from callback.optimizater.adamw import AdamW
@@ -47,15 +46,27 @@ def train(args, train_dataset, model, tokenizer):
 
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ["bias", "LayerNorm.weight"]
+    bert_param_optimizer = list(model.bert.named_parameters())
+    crf_param_optimizer = list(model.crf.named_parameters())
+    linear_param_optimizer = list(model.classifier.named_parameters())
     optimizer_grouped_parameters = [
-        {"params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-        "weight_decay": args.weight_decay,},
-        {"params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": 0.0},
+        {'params': [p for n, p in bert_param_optimizer if not any(nd in n for nd in no_decay)],
+         'weight_decay': args.weight_decay, 'lr': args.learning_rate},
+        {'params': [p for n, p in bert_param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0,
+         'lr': args.learning_rate},
+        {'params': [p for n, p in crf_param_optimizer if not any(nd in n for nd in no_decay)],
+         'weight_decay': args.weight_decay,'lr': 0.001},
+        {'params': [p for n, p in crf_param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0,
+         'lr': 0.001},
+        {'params': [p for n, p in linear_param_optimizer if not any(nd in n for nd in no_decay)],
+         'weight_decay': args.weight_decay,'lr': 0.001},
+        {'params': [p for n, p in linear_param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0,
+         'lr': 0.001}
     ]
+    args.warmup_steps = int(t_total * args.warmup_proportion)
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.warmup_steps,
                                                 num_training_steps=t_total)
-
     # Check if saved optimizer or scheduler states exist
     if os.path.isfile(os.path.join(args.model_name_or_path, "optimizer.pt")) and os.path.isfile(
         os.path.join(args.model_name_or_path, "scheduler.pt")):
@@ -97,7 +108,6 @@ def train(args, train_dataset, model, tokenizer):
         global_step = int(args.model_name_or_path.split("-")[-1].split("/")[0])
         epochs_trained = global_step // (len(train_dataloader) // args.gradient_accumulation_steps)
         steps_trained_in_current_epoch = global_step % (len(train_dataloader) // args.gradient_accumulation_steps)
-
         logger.info("  Continuing training from checkpoint, will skip to saved global_step")
         logger.info("  Continuing training from epoch %d", epochs_trained)
         logger.info("  Continuing training from global step %d", global_step)
@@ -243,7 +253,6 @@ def predict(args, model, tokenizer, prefix=""):
     logger.info("***** Running prediction %s *****", prefix)
     logger.info("  Num examples = %d", len(test_dataset))
     logger.info("  Batch size = %d", 1)
-
     results = []
     output_submit_file = os.path.join(pred_output_dir, prefix, "test_prediction.json")
     pbar = ProgressBar(n_total=len(test_dataloader), desc="Predicting")
@@ -367,7 +376,7 @@ def main():
     parser.add_argument("--gradient_accumulation_steps",type=int,default=1,
                         help="Number of updates steps to accumulate before performing a backward/update pass.",)
     parser.add_argument("--learning_rate", default=5e-5, type=float, help="The initial learning rate for Adam.")
-    parser.add_argument("--weight_decay", default=0.0, type=float, help="Weight decay if we apply some.")
+    parser.add_argument("--weight_decay", default=0.01, type=float, help="Weight decay if we apply some.")
     parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
     parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
     parser.add_argument("--num_train_epochs", default=3.0, type=float,
@@ -375,7 +384,8 @@ def main():
     parser.add_argument( "--max_steps", default=-1,type=int,
                          help="If > 0: set total number of training steps to perform. Override num_train_epochs.",)
 
-    parser.add_argument("--warmup_steps", default=0, type=int, help="Linear warmup over warmup_steps.")
+    parser.add_argument("--warmup_proportion", default=0.1, type=float,
+                        help="Proportion of training to perform linear learning rate warmup for,E.g., 0.1 = 10% of training.")
     parser.add_argument("--logging_steps", type=int, default=50, help="Log every X updates steps.")
     parser.add_argument("--save_steps", type=int, default=50, help="Save checkpoint every X updates steps.")
     parser.add_argument("--eval_all_checkpoints",action="store_true",
@@ -402,7 +412,8 @@ def main():
     args.output_dir = args.output_dir + '{}'.format(args.model_type)
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
-    init_logger(log_file=args.output_dir + '/{}-{}.log'.format(args.model_type, args.task_name))
+    init_logger(log_file=args.output_dir + '/{}-{}-{}.log'.format(args.model_type, args.task_name,
+                                                                  time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())))
     if os.path.exists(args.output_dir) and os.listdir(
             args.output_dir) and args.do_train and not args.overwrite_output_dir:
         raise ValueError(

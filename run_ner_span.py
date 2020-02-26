@@ -3,7 +3,7 @@ import glob
 import logging
 import os
 import json
-
+import time
 import torch
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler,TensorDataset
@@ -50,6 +50,7 @@ def train(args, train_dataset, model, tokenizer):
         "weight_decay": args.weight_decay,},
         {"params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": 0.0},
     ]
+    args.warmup_steps = int(t_total * args.warmup_proportion)
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.warmup_steps,
                                                 num_training_steps=t_total)
@@ -357,7 +358,7 @@ def main():
     parser.add_argument("--gradient_accumulation_steps",type=int,default=1,
                         help="Number of updates steps to accumulate before performing a backward/update pass.",)
     parser.add_argument("--learning_rate", default=5e-5, type=float, help="The initial learning rate for Adam.")
-    parser.add_argument("--weight_decay", default=0.0, type=float, help="Weight decay if we apply some.")
+    parser.add_argument("--weight_decay", default=0.01, type=float, help="Weight decay if we apply some.")
     parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
     parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
     parser.add_argument("--num_train_epochs", default=3.0, type=float,
@@ -365,7 +366,8 @@ def main():
     parser.add_argument( "--max_steps", default=-1,type=int,
                          help="If > 0: set total number of training steps to perform. Override num_train_epochs.",)
 
-    parser.add_argument("--warmup_steps", default=0, type=int, help="Linear warmup over warmup_steps.")
+    parser.add_argument("--warmup_proportion", default=0.1, type=float,
+                        help="Proportion of training to perform linear learning rate warmup for,E.g., 0.1 = 10% of training.")
     parser.add_argument("--logging_steps", type=int, default=50, help="Log every X updates steps.")
     parser.add_argument("--save_steps", type=int, default=50, help="Save checkpoint every X updates steps.")
     parser.add_argument("--eval_all_checkpoints",action="store_true",
@@ -392,7 +394,8 @@ def main():
     args.output_dir = args.output_dir + '{}'.format(args.model_type)
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
-    init_logger(log_file=args.output_dir + '/{}-{}.log'.format(args.model_type, args.task_name))
+    init_logger(log_file=args.output_dir + '/{}-{}-{}.log'.format(args.model_type, args.task_name,
+                                                                  time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())))
     if os.path.exists(args.output_dir) and os.listdir(
             args.output_dir) and args.do_train and not args.overwrite_output_dir:
         raise ValueError(
@@ -470,44 +473,44 @@ def main():
         # Good practice: save your training arguments together with the trained model
         torch.save(args, os.path.join(args.output_dir, "training_args.bin"))
     # Evaluation
-    results = {}
-    if args.do_eval and args.local_rank in [-1, 0]:
-        tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
-        checkpoints = [args.output_dir]
-        if args.eval_all_checkpoints:
-            checkpoints = list(
-                os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + "/**/" + WEIGHTS_NAME, recursive=True))
-            )
-            logging.getLogger("pytorch_transformers.modeling_utils").setLevel(logging.WARN)  # Reduce logging
-        logger.info("Evaluate the following checkpoints: %s", checkpoints)
-        for checkpoint in checkpoints:
-            global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
-            prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
-            model = model_class.from_pretrained(checkpoint)
-            model.to(args.device)
-            result = evaluate(args, model, tokenizer, prefix=prefix)
-            if global_step:
-                result = {"{}_{}".format(global_step, k): v for k, v in result.items()}
-            results.update(result)
-        output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
-        with open(output_eval_file, "w") as writer:
-            for key in sorted(results.keys()):
-                writer.write("{} = {}\n".format(key, str(results[key])))
-
-    if args.do_predict and args.local_rank in [-1, 0]:
-        tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
-        checkpoints = [args.output_dir]
-        if args.predict_all_checkpoints > 0:
-            checkpoints = list(
-                os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + '/**/' + WEIGHTS_NAME, recursive=True)))
-            logging.getLogger("transformers.modeling_utils").setLevel(logging.WARN)  # Reduce logging
-            checkpoints = [x for x in checkpoints if x.split('-')[-1] == str(args.predict_checkpoints)]
-        logger.info("Predict the following checkpoints: %s", checkpoints)
-        for checkpoint in checkpoints:
-            prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
-            model = model_class.from_pretrained(checkpoint)
-            model.to(args.device)
-            predict(args, model, tokenizer, prefix=prefix)
+    # results = {}
+    # if args.do_eval and args.local_rank in [-1, 0]:
+    #     tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+    #     checkpoints = [args.output_dir]
+    #     if args.eval_all_checkpoints:
+    #         checkpoints = list(
+    #             os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + "/**/" + WEIGHTS_NAME, recursive=True))
+    #         )
+    #         logging.getLogger("pytorch_transformers.modeling_utils").setLevel(logging.WARN)  # Reduce logging
+    #     logger.info("Evaluate the following checkpoints: %s", checkpoints)
+    #     for checkpoint in checkpoints:
+    #         global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
+    #         prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
+    #         model = model_class.from_pretrained(checkpoint)
+    #         model.to(args.device)
+    #         result = evaluate(args, model, tokenizer, prefix=prefix)
+    #         if global_step:
+    #             result = {"{}_{}".format(global_step, k): v for k, v in result.items()}
+    #         results.update(result)
+    #     output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
+    #     with open(output_eval_file, "w") as writer:
+    #         for key in sorted(results.keys()):
+    #             writer.write("{} = {}\n".format(key, str(results[key])))
+    #
+    # if args.do_predict and args.local_rank in [-1, 0]:
+    #     tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+    #     checkpoints = [args.output_dir]
+    #     if args.predict_all_checkpoints > 0:
+    #         checkpoints = list(
+    #             os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + '/**/' + WEIGHTS_NAME, recursive=True)))
+    #         logging.getLogger("transformers.modeling_utils").setLevel(logging.WARN)  # Reduce logging
+    #         checkpoints = [x for x in checkpoints if x.split('-')[-1] == str(args.predict_checkpoints)]
+    #     logger.info("Predict the following checkpoints: %s", checkpoints)
+    #     for checkpoint in checkpoints:
+    #         prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
+    #         model = model_class.from_pretrained(checkpoint)
+    #         model.to(args.device)
+    #         predict(args, model, tokenizer, prefix=prefix)
 
 if __name__ == "__main__":
     main()
