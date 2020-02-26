@@ -63,7 +63,7 @@ The overall performance of BERT on **dev**:
 | ------------ | ------------------ | ------------------ | ------------------ | ------------------------------------------------------------ |
 | BERT+Softmax | 0.7916     | 0.7962     | 0.7939    | train_max_length=128 eval_max_length=512 epoch=4 lr=3e-5 batch_size=24 |
 | BERT+CRF     | 0.7877     | 0.8008 | 0.7942     | train_max_length=128 eval_max_length=512 epoch=5 lr=3e-5 batch_size=24 |
-| BERT+Span    | 0.8132 | 0.8092 | 0.8112 | train_max_length=128 eval_max_length=512 epoch=4 lr=3e-5 batch_size=24 |
+| BERT+Span    | 0.8132 | 0.8092 | **0.8112** | train_max_length=128 eval_max_length=512 epoch=4 lr=3e-5 batch_size=24 |
 | BERT+Span+focal_loss    | 0.8121 | 0.8008 | 0.8064 | train_max_length=128 eval_max_length=512 epoch=4 lr=3e-5 batch_size=24 loss_type=focal |
 | BERT+Span+label_smoothing   | 0.8235 | 0.7946 | 0.8088 | train_max_length=128 eval_max_length=512 epoch=4 lr=3e-5 batch_size=24 loss_type=lsr |
 
@@ -76,7 +76,7 @@ The overall performance of ALBERT on **dev**:
 | albert | base_google   | 0.8014           | 0.6908         | 0.7420     | 0.75x            |
 | albert | large_google  | 0.8024           | 0.7520         | 0.7763     | 2.1x             |
 | albert | xlarge_google | 0.8286           | 0.7773         | 0.8021     | 6.7x             |
-| bert   | google        | 0.8118           | 0.8031         | 0.8074     | -----            |
+| bert   | google        | 0.8118           | 0.8031         | **0.8074**     | -----            |
 | albert | base_bright   | 0.8068           | 0.7529         | 0.7789     | 0.75x            |
 | albert | large_bright  | 0.8152           | 0.7480         | 0.7802     | 2.2x             |
 | albert | xlarge_bright | 0.8222           | 0.7692         | 0.7948     | 7.3x             |
