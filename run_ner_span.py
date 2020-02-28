@@ -472,45 +472,45 @@ def main():
         tokenizer.save_vocabulary(args.output_dir)
         # Good practice: save your training arguments together with the trained model
         torch.save(args, os.path.join(args.output_dir, "training_args.bin"))
-    # Evaluation
-    # results = {}
-    # if args.do_eval and args.local_rank in [-1, 0]:
-    #     tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
-    #     checkpoints = [args.output_dir]
-    #     if args.eval_all_checkpoints:
-    #         checkpoints = list(
-    #             os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + "/**/" + WEIGHTS_NAME, recursive=True))
-    #         )
-    #         logging.getLogger("pytorch_transformers.modeling_utils").setLevel(logging.WARN)  # Reduce logging
-    #     logger.info("Evaluate the following checkpoints: %s", checkpoints)
-    #     for checkpoint in checkpoints:
-    #         global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
-    #         prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
-    #         model = model_class.from_pretrained(checkpoint)
-    #         model.to(args.device)
-    #         result = evaluate(args, model, tokenizer, prefix=prefix)
-    #         if global_step:
-    #             result = {"{}_{}".format(global_step, k): v for k, v in result.items()}
-    #         results.update(result)
-    #     output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
-    #     with open(output_eval_file, "w") as writer:
-    #         for key in sorted(results.keys()):
-    #             writer.write("{} = {}\n".format(key, str(results[key])))
-    #
-    # if args.do_predict and args.local_rank in [-1, 0]:
-    #     tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
-    #     checkpoints = [args.output_dir]
-    #     if args.predict_all_checkpoints > 0:
-    #         checkpoints = list(
-    #             os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + '/**/' + WEIGHTS_NAME, recursive=True)))
-    #         logging.getLogger("transformers.modeling_utils").setLevel(logging.WARN)  # Reduce logging
-    #         checkpoints = [x for x in checkpoints if x.split('-')[-1] == str(args.predict_checkpoints)]
-    #     logger.info("Predict the following checkpoints: %s", checkpoints)
-    #     for checkpoint in checkpoints:
-    #         prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
-    #         model = model_class.from_pretrained(checkpoint)
-    #         model.to(args.device)
-    #         predict(args, model, tokenizer, prefix=prefix)
+    #Evaluation
+    results = {}
+    if args.do_eval and args.local_rank in [-1, 0]:
+        tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+        checkpoints = [args.output_dir]
+        if args.eval_all_checkpoints:
+            checkpoints = list(
+                os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + "/**/" + WEIGHTS_NAME, recursive=True))
+            )
+            logging.getLogger("pytorch_transformers.modeling_utils").setLevel(logging.WARN)  # Reduce logging
+        logger.info("Evaluate the following checkpoints: %s", checkpoints)
+        for checkpoint in checkpoints:
+            global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
+            prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
+            model = model_class.from_pretrained(checkpoint)
+            model.to(args.device)
+            result = evaluate(args, model, tokenizer, prefix=prefix)
+            if global_step:
+                result = {"{}_{}".format(global_step, k): v for k, v in result.items()}
+            results.update(result)
+        output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
+        with open(output_eval_file, "w") as writer:
+            for key in sorted(results.keys()):
+                writer.write("{} = {}\n".format(key, str(results[key])))
+
+    if args.do_predict and args.local_rank in [-1, 0]:
+        tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+        checkpoints = [args.output_dir]
+        if args.predict_all_checkpoints > 0:
+            checkpoints = list(
+                os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + '/**/' + WEIGHTS_NAME, recursive=True)))
+            logging.getLogger("transformers.modeling_utils").setLevel(logging.WARN)  # Reduce logging
+            checkpoints = [x for x in checkpoints if x.split('-')[-1] == str(args.predict_checkpoints)]
+        logger.info("Predict the following checkpoints: %s", checkpoints)
+        for checkpoint in checkpoints:
+            prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
+            model = model_class.from_pretrained(checkpoint)
+            model.to(args.device)
+            predict(args, model, tokenizer, prefix=prefix)
 
 if __name__ == "__main__":
     main()

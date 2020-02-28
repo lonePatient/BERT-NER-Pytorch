@@ -21,11 +21,8 @@ class AlbertSoftmaxForNer(AlbertPreTrainedModel):
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None,
                 position_ids=None, head_mask=None, labels=None):
-        outputs = self.bert(input_ids,
-                            attention_mask=attention_mask,
-                            token_type_ids=token_type_ids,
-                            position_ids=position_ids,
-                            head_mask=head_mask)
+        outputs = self.bert(input_ids = input_ids,attention_mask=attention_mask,token_type_ids=token_type_ids,
+                            position_ids=position_ids,head_mask=head_mask)
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
@@ -59,7 +56,7 @@ class AlbertCrfForNer(AlbertPreTrainedModel):
         self.init_weights()
 
     def forward(self, input_ids, token_type_ids=None, attention_mask=None,labels=None,input_lens=None):
-        outputs = self.bert(input_ids, token_type_ids, attention_mask)
+        outputs = self.bert(input_ids = input_ids,attention_mask=attention_mask,token_type_ids=token_type_ids)
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
@@ -85,7 +82,7 @@ class AlbertSpanForNer(AlbertPreTrainedModel):
         self.init_weights()
 
     def forward(self, input_ids, token_type_ids=None, attention_mask=None, start_positions=None,end_positions=None):
-        outputs = self.bert(input_ids, token_type_ids, attention_mask)
+        outputs = self.bert(input_ids = input_ids,attention_mask=attention_mask,token_type_ids=token_type_ids)
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
         start_logits = self.start_fc(sequence_output)
