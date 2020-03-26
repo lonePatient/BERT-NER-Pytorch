@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .crf import CRF
+from .layers.crf import CRF
 from .transformers.modeling_bert import BertPreTrainedModel
 from .transformers.modeling_bert import BertModel
-from .linears import PoolerEndLogits, PoolerStartLogits
+from .layers.linears import PoolerEndLogits, PoolerStartLogits
 from torch.nn import CrossEntropyLoss
 from losses.focal_loss import FocalLoss
 from losses.label_smoothing import LabelSmoothingCrossEntropy

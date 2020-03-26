@@ -231,6 +231,7 @@ class CluenerProcessor(DataProcessor):
             labels = line['labels']
             examples.append(InputExample(guid=guid, text_a=text_a, labels=labels))
         return examples
+
 ner_processors = {
     "cner": CnerProcessor,
     'cluener':CluenerProcessor

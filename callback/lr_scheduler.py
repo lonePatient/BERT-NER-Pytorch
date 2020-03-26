@@ -4,14 +4,6 @@ import warnings
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import LambdaLR
 
-__all__ = ['CustomDecayLR',
-           'BertLR',
-           'CyclicLR',
-           'ReduceLROnPlateau',
-           'ReduceLRWDOnPlateau',
-           'CosineLRWithRestarts',
-           ]
-
 def get_constant_schedule(optimizer, last_epoch=-1):
     """ Create a schedule with a constant learning rate.
     """
