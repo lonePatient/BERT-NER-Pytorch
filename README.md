@@ -94,8 +94,3 @@ The overall performance of BERT on **dev(test)**:
 | BERT+Span    | 0.9604(**0.9620**) | 0.9617(0.9632)     | 0.9611(**0.9626**) |
 | BERT+Span+focal_loss    | 0.9516(0.9569) | 0.9644(0.9681)     | 0.9580(0.9625) |
 | BERT+Span+label_smoothing   | 0.9566(0.9568) | 0.9624(0.9656)     | 0.9595(0.9612) |
-
-
-### 更新
-
-* 001: 新增FGM对抗训练
