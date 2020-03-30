@@ -66,6 +66,7 @@ The overall performance of BERT on **dev**:
 | BERT+CRF     | 0.7877     | 0.8008 | 0.7942     |
 | BERT+Span    | 0.8132 | 0.8092 | 0.8112 |
 | BERT+Span+adv    | 0.8267 | 0.8073 | **0.8169** |
+| BERT(6 layers)+Span+kd    | 0.8241 | 0.7839 | 0.8051 |
 | BERT+Span+focal_loss    | 0.8121 | 0.8008 | 0.8064 |
 | BERT+Span+label_smoothing   | 0.8235 | 0.7946 | 0.8088 |
 
