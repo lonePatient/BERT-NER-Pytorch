@@ -107,16 +107,16 @@ def convert_examples_to_features(examples,label_list,max_seq_length,tokenizer,
         # used as as the "sentence vector". Note that this only makes sense because
         # the entire model is fine-tuned.
         tokens += [sep_token]
-        label_ids += [label_map[sep_token]]
+        label_ids += [label_map['O']]
         segment_ids = [sequence_a_segment_id] * len(tokens)
 
         if cls_token_at_end:
             tokens += [cls_token]
-            label_ids += [label_map[cls_token]]
+            label_ids += [label_map['O']]
             segment_ids += [cls_token_segment_id]
         else:
             tokens = [cls_token] + tokens
-            label_ids = [label_map[cls_token]] + label_ids
+            label_ids = [label_map['O']] + label_ids
             segment_ids = [cls_token_segment_id] + segment_ids
 
         input_ids = tokenizer.convert_tokens_to_ids(tokens)
@@ -219,7 +219,7 @@ class CluenerProcessor(DataProcessor):
                 'I-organization', 'I-position','I-scene',
                 "S-address", "S-book", "S-company", 'S-game', 'S-government', 'S-movie',
                 'S-name', 'S-organization', 'S-position',
-                'S-scene','O',"[CLS]", "[SEP]"]
+                'S-scene','O',"<START>",'<STOP>']
 
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""

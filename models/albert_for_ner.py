@@ -52,7 +52,7 @@ class AlbertCrfForNer(AlbertPreTrainedModel):
         self.bert = AlbertModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, len(label2id))
-        self.crf = CRF(tagset_size=len(label2id), tag_dictionary=label2id, device=device, is_bert=True)
+        self.crf = CRF(tagset_size=len(label2id), tag_dictionary=label2id, device=device)
         self.init_weights()
 
     def forward(self, input_ids, token_type_ids=None, attention_mask=None,labels=None,input_lens=None):

@@ -1,3 +1,4 @@
+import copy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -25,19 +26,15 @@ def log_sum_exp_batch(vecs):
     return maxi + recti_
 
 class CRF(nn.Module):
-    def __init__(self,tagset_size,tag_dictionary,device,is_bert=None):
+    def __init__(self,tagset_size,tag_dictionary,device):
         super(CRF,self).__init__()
-
         self.START_TAG = "<START>"
         self.STOP_TAG = "<STOP>"
-        if is_bert:
-            self.START_TAG = "[CLS]"
-            self.STOP_TAG = "[SEP]"
         self.tag_dictionary = tag_dictionary
         self.tagset_size = tagset_size
         self.device = device
         self.transitions = torch.randn(tagset_size, tagset_size)
-        # self.transitions = torch.zeros(tagset_size, tagset_size)
+
         self.transitions.detach()[self.tag_dictionary[self.START_TAG], :] = -10000
         self.transitions.detach()[:, self.tag_dictionary[self.STOP_TAG]] = -10000
         self.transitions = self.transitions.to(device)

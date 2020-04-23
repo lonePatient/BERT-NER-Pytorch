@@ -34,10 +34,6 @@ Input format (prefer BIOS tag scheme), with each character its label for one lin
 我	O
 跟	O
 他	O
-谈	O
-笑	O
-风	O
-生	O 
 ```
 
 ### run the code
@@ -62,8 +58,8 @@ The overall performance of BERT on **dev**:
 
 |              | Accuracy (entity)  | Recall (entity)    | F1 score (entity)  |
 | ------------ | ------------------ | ------------------ | ------------------ |
-| BERT+Softmax | 0.7916     | 0.7962     | 0.7939    |
-| BERT+CRF     | 0.7877     | 0.8008 | 0.7942     |
+| BERT+Softmax | 0.7897     | 0.8031     | 0.7963    |
+| BERT+CRF     | 0.7959  | 0.8099 | 0.8028 |
 | BERT+Span    | 0.8132 | 0.8092 | 0.8112 |
 | BERT+Span+adv    | 0.8267 | 0.8073 | **0.8169** |
 | BERT-small(6 layers)+Span+kd    | 0.8241 | 0.7839 | 0.8051 |

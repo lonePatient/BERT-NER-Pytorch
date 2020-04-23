@@ -15,11 +15,11 @@ python run_ner_crf.py \
   --train_max_seq_length=128 \
   --eval_max_seq_length=512 \
   --per_gpu_train_batch_size=24 \
-  --per_gpu_eval_batch_size=16 \
-  --learning_rate=2e-5 \
-  --num_train_epochs=5.0 \
-  --logging_steps=672 \
-  --save_steps=672 \
+  --per_gpu_eval_batch_size=24 \
+  --learning_rate=3e-5 \
+  --num_train_epochs=3.0 \
+  --logging_steps=448 \
+  --save_steps=448 \
   --output_dir=$OUTPUR_DIR/${TASK_NAME}_output/ \
   --overwrite_output_dir \
   --seed=42
