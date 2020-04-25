@@ -47,12 +47,12 @@ class AlbertSoftmaxForNer(AlbertPreTrainedModel):
         return outputs  # (loss), scores, (hidden_states), (attentions)
 
 class AlbertCrfForNer(AlbertPreTrainedModel):
-    def __init__(self, config, label2id, device):
+    def __init__(self, config):
         super(AlbertCrfForNer, self).__init__(config)
         self.bert = AlbertModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.classifier = nn.Linear(config.hidden_size, len(label2id))
-        self.crf = CRF(tagset_size=len(label2id), tag_dictionary=label2id, device=device)
+        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
+        self.crf = CRF(num_tags=config.num_labels, batch_first=True)
         self.init_weights()
 
     def forward(self, input_ids, token_type_ids=None, attention_mask=None,labels=None,input_lens=None):
@@ -62,8 +62,8 @@ class AlbertCrfForNer(AlbertPreTrainedModel):
         logits = self.classifier(sequence_output)
         outputs = (logits,)
         if labels is not None:
-            loss = self.crf.calculate_loss(logits, tag_list=labels, lengths=input_lens)
-            outputs =(loss,)+outputs
+            loss = self.crf(emissions = logits, tags=labels, mask=attention_mask)
+            outputs =(-1*loss,)+outputs
         return outputs # (loss), scores
 
 class AlbertSpanForNer(AlbertPreTrainedModel):

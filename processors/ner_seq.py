@@ -174,7 +174,7 @@ class CnerProcessor(DataProcessor):
         """See base class."""
         return ["X",'B-CONT','B-EDU','B-LOC','B-NAME','B-ORG','B-PRO','B-RACE','B-TITLE',
                 'I-CONT','I-EDU','I-LOC','I-NAME','I-ORG','I-PRO','I-RACE','I-TITLE',
-                'O','S-NAME','S-ORG','S-RACE',"[CLS]", "[SEP]"]
+                'O','S-NAME','S-ORG','S-RACE',"[START]", "[END]"]
 
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
@@ -219,7 +219,7 @@ class CluenerProcessor(DataProcessor):
                 'I-organization', 'I-position','I-scene',
                 "S-address", "S-book", "S-company", 'S-game', 'S-government', 'S-movie',
                 'S-name', 'S-organization', 'S-position',
-                'S-scene','O',"<START>",'<STOP>']
+                'S-scene','O',"[START]", "[END]"]
 
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""

@@ -12,7 +12,7 @@ from callback.optimizater.adamw import AdamW
 from callback.lr_scheduler import get_linear_schedule_with_warmup
 from callback.progressbar import ProgressBar
 from callback.adversarial import FGM
-from tools.common import seed_everything,json_to_text
+from tools.common import seed_everything, json_to_text
 from tools.common import init_logger, logger
 
 from models.transformers import WEIGHTS_NAME, BertConfig, AlbertConfig
@@ -32,6 +32,7 @@ MODEL_CLASSES = {
     'albert': (AlbertConfig, AlbertSpanForNer, CNerTokenizer)
 }
 
+
 def train(args, train_dataset, model, tokenizer):
     """ Train the model """
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
@@ -50,19 +51,19 @@ def train(args, train_dataset, model, tokenizer):
     end_parameters = model.end_fc.named_parameters()
     optimizer_grouped_parameters = [
         {"params": [p for n, p in bert_parameters if not any(nd in n for nd in no_decay)],
-        "weight_decay": args.weight_decay,'lr':args.learning_rate},
+         "weight_decay": args.weight_decay, 'lr': args.learning_rate},
         {"params": [p for n, p in bert_parameters if any(nd in n for nd in no_decay)], "weight_decay": 0.0
-         ,'lr':args.learning_rate},
+            , 'lr': args.learning_rate},
 
         {"params": [p for n, p in start_parameters if not any(nd in n for nd in no_decay)],
-         "weight_decay": args.weight_decay,'lr':0.001},
+         "weight_decay": args.weight_decay, 'lr': 0.001},
         {"params": [p for n, p in start_parameters if any(nd in n for nd in no_decay)], "weight_decay": 0.0
-         ,'lr':0.001},
+            , 'lr': 0.001},
 
         {"params": [p for n, p in end_parameters if not any(nd in n for nd in no_decay)],
-         "weight_decay": args.weight_decay,'lr':0.001},
+         "weight_decay": args.weight_decay, 'lr': 0.001},
         {"params": [p for n, p in end_parameters if any(nd in n for nd in no_decay)], "weight_decay": 0.0
-         ,'lr':0.001},
+            , 'lr': 0.001},
     ]
     # optimizer_grouped_parameters = [
     #     {"params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
@@ -151,7 +152,7 @@ def train(args, train_dataset, model, tokenizer):
             if args.do_adv:
                 fgm.attack()
                 loss_adv = model(**inputs)[0]
-                if args.n_gpu>1:
+                if args.n_gpu > 1:
                     loss_adv = loss_adv.mean()
                 loss_adv.backward()
                 fgm.restore()
@@ -168,7 +169,7 @@ def train(args, train_dataset, model, tokenizer):
                 global_step += 1
                 if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
                     # Log metrics
-                    print(" ")
+                    logger.info("\n")
                     if args.local_rank == -1:
                         # Only evaluate when single GPU otherwise metrics may not average well
                         evaluate(args, model, tokenizer)
@@ -187,7 +188,7 @@ def train(args, train_dataset, model, tokenizer):
                     torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
                     torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
                     logger.info("Saving optimizer and scheduler states to %s", output_dir)
-        print(" ")
+        logger.info("\n")
         if 'cuda' in str(args.device):
             torch.cuda.empty_cache()
     return global_step, tr_loss / global_step
@@ -232,7 +233,7 @@ def evaluate(args, model, tokenizer, prefix=""):
         eval_loss += tmp_eval_loss.item()
         nb_eval_steps += 1
         pbar(step)
-    print(' ')
+    logger.info("\n")
     eval_loss = eval_loss / nb_eval_steps
     eval_info, entity_info = metric.result()
     results = {f'{key}': value for key, value in eval_info.items()}
@@ -263,7 +264,7 @@ def predict(args, model, tokenizer, prefix=""):
     logger.info("  Batch size = %d", 1)
 
     results = []
-    output_submit_file = os.path.join(pred_output_dir, prefix, "cluener_predict.json")
+    output_predict_file = os.path.join(pred_output_dir, prefix, "test_predict.json")
     pbar = ProgressBar(n_total=len(test_dataloader), desc="Predicting")
     for step, batch in enumerate(test_dataloader):
         model.eval()
@@ -285,37 +286,39 @@ def predict(args, model, tokenizer, prefix=""):
         json_d['entities'] = label_entities
         results.append(json_d)
         pbar(step)
-    print(" ")
-    # with open(output_submit_file, "w") as writer:
-    #     for record in results:
-    #         writer.write(json.dumps(record) + '\n')
-    test_text = []
-    with open(os.path.join(args.data_dir,"test.json"), 'r') as fr:
-        for line in fr:
-            test_text.append(json.loads(line))
-    test_submit = []
-    for x, y in zip(test_text, results):
-        json_d = {}
-        json_d['id'] = x['id']
-        json_d['label'] = {}
-        entities = y['entities']
-        words = list(x['text'])
-        if len(entities) != 0:
-            for subject in entities:
-                tag = subject[0]
-                start = subject[1]
-                end = subject[2]
-                word = "".join(words[start:end + 1])
-                if tag in json_d['label']:
-                    if word in json_d['label'][tag]:
-                        json_d['label'][tag][word].append([start, end])
+    logger.info("\n")
+    with open(output_predict_file, "w") as writer:
+        for record in results:
+            writer.write(json.dumps(record) + '\n')
+    if args.task_name == "cluener":
+        output_submit_file = os.path.join(pred_output_dir, prefix, "test_submit.json")
+        test_text = []
+        with open(os.path.join(args.data_dir, "test.json"), 'r') as fr:
+            for line in fr:
+                test_text.append(json.loads(line))
+        test_submit = []
+        for x, y in zip(test_text, results):
+            json_d = {}
+            json_d['id'] = x['id']
+            json_d['label'] = {}
+            entities = y['entities']
+            words = list(x['text'])
+            if len(entities) != 0:
+                for subject in entities:
+                    tag = subject[0]
+                    start = subject[1]
+                    end = subject[2]
+                    word = "".join(words[start:end + 1])
+                    if tag in json_d['label']:
+                        if word in json_d['label'][tag]:
+                            json_d['label'][tag][word].append([start, end])
+                        else:
+                            json_d['label'][tag][word] = [[start, end]]
                     else:
+                        json_d['label'][tag] = {}
                         json_d['label'][tag][word] = [[start, end]]
-                else:
-                    json_d['label'][tag] = {}
-                    json_d['label'][tag][word] = [[start, end]]
-        test_submit.append(json_d)
-    json_to_text(output_submit_file,test_submit)
+            test_submit.append(json_d)
+        json_to_text(output_submit_file, test_submit)
 
 
 def load_and_cache_examples(args, task, tokenizer, data_type='train'):

@@ -57,6 +57,8 @@ def get_argparse():
                         help="Number of updates steps to accumulate before performing a backward/update pass.", )
     parser.add_argument("--learning_rate", default=5e-5, type=float,
                         help="The initial learning rate for Adam.")
+    parser.add_argument("--crf_learning_rate", default=5e-5, type=float,
+                        help="The initial learning rate for crf and linear layer.")
     parser.add_argument("--weight_decay", default=0.01, type=float,
                         help="Weight decay if we apply some.")
     parser.add_argument("--adam_epsilon", default=1e-8, type=float,
@@ -75,8 +77,8 @@ def get_argparse():
     parser.add_argument("--save_steps", type=int, default=50, help="Save checkpoint every X updates steps.")
     parser.add_argument("--eval_all_checkpoints", action="store_true",
                         help="Evaluate all checkpoints starting with the same prefix as model_name ending and ending with step number", )
-    parser.add_argument('--predict_checkpoints', action="store_true",
-                        help="Predict checkpoints starting with the same prefix as model_name ending and ending with step number", )
+    parser.add_argument("--predict_checkpoints",type=int, default=0,
+                        help="predict checkpoints starting with the same prefix as model_name ending and ending with step number")
     parser.add_argument("--no_cuda", action="store_true", help="Avoid using CUDA when available")
     parser.add_argument("--overwrite_output_dir", action="store_true",
                         help="Overwrite the content of the output directory")

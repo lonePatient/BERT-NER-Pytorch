@@ -59,7 +59,7 @@ The overall performance of BERT on **dev**:
 |              | Accuracy (entity)  | Recall (entity)    | F1 score (entity)  |
 | ------------ | ------------------ | ------------------ | ------------------ |
 | BERT+Softmax | 0.7897     | 0.8031     | 0.7963    |
-| BERT+CRF     | 0.7959  | 0.8099 | 0.8028 |
+| BERT+CRF     | 0.7977 | 0.8177 | 0.8076 |
 | BERT+Span    | 0.8132 | 0.8092 | 0.8112 |
 | BERT+Span+adv    | 0.8267 | 0.8073 | **0.8169** |
 | BERT-small(6 layers)+Span+kd    | 0.8241 | 0.7839 | 0.8051 |

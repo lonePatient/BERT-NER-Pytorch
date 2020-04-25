@@ -169,7 +169,7 @@ def train(args, train_dataset, model, tokenizer):
                     torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
                     torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
                     logger.info("Saving optimizer and scheduler states to %s", output_dir)
-        print(" ")
+        logger.info("\n")
         if 'cuda' in str(args.device):
             torch.cuda.empty_cache()
     return global_step, tr_loss / global_step
@@ -222,7 +222,7 @@ def evaluate(args, model, tokenizer, prefix=""):
                     temp_1.append(args.id2label[out_label_ids[i][j]])
                     temp_2.append(preds[i][j])
         pbar(step)
-    print(' ')
+    logger.info("\n")
     eval_loss = eval_loss / nb_eval_steps
     eval_info, entity_info = metric.result()
     results = {f'{key}': value for key, value in eval_info.items()}
@@ -275,7 +275,7 @@ def predict(args, model, tokenizer, prefix=""):
         json_d['entities'] = label_entities
         results.append(json_d)
         pbar(step)
-    print(" ")
+    logger.info("\n")
     with open(output_submit_file, "w") as writer:
         for record in results:
             writer.write(json.dumps(record) + '\n')
