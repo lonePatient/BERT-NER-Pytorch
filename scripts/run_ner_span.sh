@@ -1,6 +1,6 @@
 CURRENT_DIR=`pwd`
 export BERT_BASE_DIR=$CURRENT_DIR/prev_trained_model/bert-base
-export GLUE_DIR=$CURRENT_DIR/datasets
+export DATA_DIR=$CURRENT_DIR/datasets
 export OUTPUR_DIR=$CURRENT_DIR/outputs
 TASK_NAME="cluener"
 
@@ -13,7 +13,7 @@ python run_ner_span.py \
   --do_adv \
   --do_lower_case \
   --loss_type=ce \
-  --data_dir=$GLUE_DIR/${TASK_NAME}/ \
+  --data_dir=$DATA_DIR/${TASK_NAME}/ \
   --train_max_seq_length=128 \
   --eval_max_seq_length=512 \
   --per_gpu_train_batch_size=24 \
