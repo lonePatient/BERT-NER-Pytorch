@@ -15,7 +15,7 @@ BERT for Chinese NER.
 
 ### requirement
 
-1. PyTorch=1.1.0+
+1. 1.1.0 =< PyTorch < 1.5.0
 2. cuda=9.0
 3. python3.6+
 
