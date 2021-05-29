@@ -78,6 +78,8 @@ def convert_examples_to_features(examples,label_list,max_seq_length,tokenizer,
             logger.info("Writing example %d of %d", ex_index, len(examples))
         textlist = example.text_a
         subjects = example.subject
+        if isinstance(textlist,list):
+            textlist = " ".join(textlist)
         tokens = tokenizer.tokenize(textlist)
         start_ids = [0] * len(tokens)
         end_ids = [0] * len(tokens)
@@ -95,7 +97,6 @@ def convert_examples_to_features(examples,label_list,max_seq_length,tokenizer,
             tokens = tokens[: (max_seq_length - special_tokens_count)]
             start_ids = start_ids[: (max_seq_length - special_tokens_count)]
             end_ids = end_ids[: (max_seq_length - special_tokens_count)]
-
         # The convention in BERT is:
         # (a) For sequence pairs:
         #  tokens:   [CLS] is this jack ##son ##ville ? [SEP] no it is not . [SEP]

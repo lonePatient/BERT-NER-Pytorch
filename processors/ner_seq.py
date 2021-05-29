@@ -80,6 +80,8 @@ def convert_examples_to_features(examples,label_list,max_seq_length,tokenizer,
     for (ex_index, example) in enumerate(examples):
         if ex_index % 10000 == 0:
             logger.info("Writing example %d of %d", ex_index, len(examples))
+        if isinstance(example.text_a,list):
+            example.text_a = " ".join(example.text_a)
         tokens = tokenizer.tokenize(example.text_a)
         label_ids = [label_map[x] for x in example.labels]
         # Account for [CLS] and [SEP] with "- 2".

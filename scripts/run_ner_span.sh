@@ -1,8 +1,8 @@
 CURRENT_DIR=`pwd`
-export BERT_BASE_DIR=$CURRENT_DIR/prev_trained_model/bert-base
+export BERT_BASE_DIR=$CURRENT_DIR/prev_trained_model/bert-base-chinese
 export DATA_DIR=$CURRENT_DIR/datasets
 export OUTPUR_DIR=$CURRENT_DIR/outputs
-TASK_NAME="cluener"
+TASK_NAME="cner"
 
 python run_ner_span.py \
   --model_type=bert \
@@ -20,8 +20,8 @@ python run_ner_span.py \
   --per_gpu_eval_batch_size=24 \
   --learning_rate=2e-5 \
   --num_train_epochs=4.0 \
-  --logging_steps=448 \
-  --save_steps=448 \
+  --logging_steps=-1 \
+  --save_steps=-1 \
   --output_dir=$OUTPUR_DIR/${TASK_NAME}_output/ \
   --overwrite_output_dir \
   --seed=42

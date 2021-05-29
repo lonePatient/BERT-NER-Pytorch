@@ -2,8 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .layers.crf import CRF
-from .transformers.modeling_bert import BertPreTrainedModel
-from .transformers.modeling_bert import BertModel
+from transformers import BertModel,BertPreTrainedModel
 from .layers.linears import PoolerEndLogits, PoolerStartLogits
 from torch.nn import CrossEntropyLoss
 from losses.focal_loss import FocalLoss
@@ -19,8 +18,7 @@ class BertSoftmaxForNer(BertPreTrainedModel):
         self.loss_type = config.loss_type
         self.init_weights()
 
-    def forward(self, input_ids, attention_mask=None, token_type_ids=None,
-                position_ids=None, head_mask=None, labels=None):
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None,labels=None):
         outputs = self.bert(input_ids = input_ids,attention_mask=attention_mask,token_type_ids=token_type_ids)
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
@@ -54,7 +52,7 @@ class BertCrfForNer(BertPreTrainedModel):
         self.crf = CRF(num_tags=config.num_labels, batch_first=True)
         self.init_weights()
 
-    def forward(self, input_ids, token_type_ids=None, attention_mask=None,labels=None,input_lens=None):
+    def forward(self, input_ids, token_type_ids=None, attention_mask=None,labels=None):
         outputs =self.bert(input_ids = input_ids,attention_mask=attention_mask,token_type_ids=token_type_ids)
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)

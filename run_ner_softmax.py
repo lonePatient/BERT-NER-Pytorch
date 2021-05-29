@@ -17,10 +17,9 @@ from callback.adversarial import FGM
 from tools.common import seed_everything
 from tools.common import init_logger, logger
 
-from models.transformers import WEIGHTS_NAME,BertConfig,AlbertConfig
+from transformers import WEIGHTS_NAME, BertConfig,get_linear_schedule_with_warmup,AdamW, BertTokenizer
 from models.bert_for_ner import BertSoftmaxForNer
-from models.albert_for_ner import AlbertSoftmaxForNer
-from processors.utils_ner import CNerTokenizer,get_entities
+from processors.utils_ner import get_entities
 from processors.ner_seq import convert_examples_to_features
 from processors.ner_seq import ner_processors as processors
 from processors.ner_seq import collate_fn
@@ -29,8 +28,7 @@ from tools.finetuning_argparse import get_argparse
 
 MODEL_CLASSES = {
     ## bert ernie bert_wwm bert_wwwm_ext
-    'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
-    'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
+    'bert': (BertConfig, BertSoftmaxForNer, BertTokenizer),
 }
 
 def train(args, train_dataset, model, tokenizer):
@@ -106,8 +104,13 @@ def train(args, train_dataset, model, tokenizer):
         fgm = FGM(model, emb_name=args.adv_name, epsilon=args.adv_epsilon)
     model.zero_grad()
     seed_everything(args.seed)  # Added here for reproductibility (even between python 2 and 3)
-    for _ in range(int(args.num_train_epochs)):
-        pbar = ProgressBar(n_total=len(train_dataloader), desc='Training')
+    pbar = ProgressBar(n_total=len(train_dataloader), desc='Training', num_epochs=int(args.num_train_epochs))
+    if args.save_steps==-1 and args.logging_steps==-1:
+        args.logging_steps=len(train_dataloader)
+        args.save_steps = len(train_dataloader)
+    for epoch in range(int(args.num_train_epochs)):
+        pbar.reset()
+        pbar.epoch_start(current_epoch=epoch)
         for step, batch in enumerate(train_dataloader):
             # Skip past any already trained steps if resuming training
             if steps_trained_in_current_epoch > 0:
@@ -144,8 +147,8 @@ def train(args, train_dataset, model, tokenizer):
                     torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), args.max_grad_norm)
                 else:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
-                scheduler.step()  # Update learning rate schedule
                 optimizer.step()
+                scheduler.step()  # Update learning rate schedule
                 model.zero_grad()
                 global_step += 1
                 if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
@@ -166,7 +169,7 @@ def train(args, train_dataset, model, tokenizer):
                     torch.save(args, os.path.join(output_dir, "training_args.bin"))
                     tokenizer.save_vocabulary(output_dir)
                     logger.info("Saving model checkpoint to %s", output_dir)
-                    torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
+                    # torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
                     torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
                     logger.info("Saving optimizer and scheduler states to %s", output_dir)
         logger.info("\n")
@@ -381,15 +384,10 @@ def main():
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
     args.model_type = args.model_type.lower()
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
-    config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path,
-                                          num_labels=num_labels,
-                                          loss_type = args.loss_type,
-                                          cache_dir=args.cache_dir if args.cache_dir else None,)
-    tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
-                                                do_lower_case=args.do_lower_case,
-                                                cache_dir=args.cache_dir if args.cache_dir else None,)
-    model = model_class.from_pretrained(args.model_name_or_path,from_tf=bool(".ckpt" in args.model_name_or_path),
-                                        config=config,cache_dir=args.cache_dir if args.cache_dir else None,)
+    config = config_class.from_pretrained(args.model_name_or_path,num_labels=num_labels)
+    config.loss_type = args.loss_type
+    tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path,do_lower_case=args.do_lower_case,)
+    model = model_class.from_pretrained(args.model_name_or_path,config=config)
     if args.local_rank == 0:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
 
