@@ -97,6 +97,10 @@ def convert_examples_to_features(examples,label_list,max_seq_length,tokenizer,
             tokens = tokens[: (max_seq_length - special_tokens_count)]
             start_ids = start_ids[: (max_seq_length - special_tokens_count)]
             end_ids = end_ids[: (max_seq_length - special_tokens_count)]
+
+        if tokenizer.do_lower_case:
+            tokens = [x.lower() for x in tokens]
+
         # The convention in BERT is:
         # (a) For sequence pairs:
         #  tokens:   [CLS] is this jack ##son ##ville ? [SEP] no it is not . [SEP]
@@ -248,5 +252,3 @@ ner_processors = {
     "cner": CnerProcessor,
     'cluener':CluenerProcessor
 }
-
-

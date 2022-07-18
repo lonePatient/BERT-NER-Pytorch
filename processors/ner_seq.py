@@ -90,6 +90,9 @@ def convert_examples_to_features(examples,label_list,max_seq_length,tokenizer,
             tokens = tokens[: (max_seq_length - special_tokens_count)]
             label_ids = label_ids[: (max_seq_length - special_tokens_count)]
 
+        if tokenizer.do_lower_case:
+            tokens = [x.lower() for x in tokens]
+
         # The convention in BERT is:
         # (a) For sequence pairs:
         #  tokens:   [CLS] is this jack ##son ##ville ? [SEP] no it is not . [SEP]
