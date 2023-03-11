@@ -2,7 +2,7 @@
 
 BERT for Chinese NER. 
 
-**update**：其他一些可以参考,包括biaffine、globalpointer等:https://github.com/lonePatient/TorchBlocks/tree/master/examples
+**update**：其他一些可以参考,包括Biaffine、GlobalPointer等:[examples](https://github.com/lonePatient/TorchBlocks/tree/master/examples)
 
 ### dataset list
 
